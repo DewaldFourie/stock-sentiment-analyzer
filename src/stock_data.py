@@ -39,4 +39,4 @@ class StockDataFetcher:
                         'success': False,
                         'error': f"Failed to fetch stock data for {stock_symbol} after {max_retries} attempts: {str(e)}"
                     }
-                continue  # Retry
+                continue 

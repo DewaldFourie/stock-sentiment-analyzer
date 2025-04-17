@@ -1,170 +1,178 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Reddit Stock Sentiment Analyzer</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            .form-group {
-                margin-bottom: 20px;
-            }
-            input[type="text"] {
-                padding: 8px;
-                width: 200px;
-            }
-            button {
-                padding: 8px 16px;
-                background-color: #007bff;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-            }
-            button:hover {
-                background-color: #0056b3;
-            }
-            #results {
-                margin-top: 20px;
-                padding: 20px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-            }
-            .error {
-                color: red;
-            }
-            .success {
-                color: green;
-            }
-            .loading {
-                color: #666;
-                font-style: italic;
-            }
-            .post {
-                margin: 15px 0;
-                padding: 15px;
-                border: 1px solid #eee;
-                border-radius: 4px;
-            }
-            .post-title {
-                font-weight: bold;
-                margin-bottom: 10px;
-            }
-            .post-meta {
-                font-size: 0.8em;
-                color: #666;
-                margin-bottom: 10px;
-            }
-            .post-text {
-                margin-top: 10px;
-                white-space: pre-wrap;
-            }
-            .sentiment-summary {
-                margin: 20px 0;
-                padding: 15px;
-                background-color: #f8f9fa;
-                border-radius: 4px;
-            }
-            .post.positive {
-                border-left: 4px solid #28a745;
-            }
-            .post.negative {
-                border-left: 4px solid #dc3545;
-            }
-            .post.neutral {
-                border-left: 4px solid #ffc107;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Reddit Stock Sentiment Analyzer</h1>
-        
-        <div class="form-group">
-            <form id="stockForm">
-                <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g., AAPL)" required>
-                <button type="submit">Analyze</button>
-            </form>
-        </div>
-        
-        <div id="results"></div>
+<head>
+    <title>Reddit Stock Sentiment Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 200px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .post {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .post-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .post-meta {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .post-text {
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .sentiment-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .post.positive {
+            border-left: 4px solid #28a745;
+        }
+        .post.negative {
+            border-left: 4px solid #dc3545;
+        }
+        .post.neutral {
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reddit Stock Sentiment Analyzer</h1>
+    
+    <div class="form-group">
+        <form id="stockForm">
+            <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g., AAPL)" required>
+            <button type="submit">Analyze</button>
+        </form>
+    </div>
+    
+    <div id="results"></div>
 
-        <script>
-            document.getElementById('stockForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const stockSymbol = document.getElementById('stockSymbol').value;
-                const resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = '<div class="loading">Analyzing... Please wait.</div>';
+    <script>
+        document.getElementById('stockForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const stockSymbol = document.getElementById('stockSymbol').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">Analyzing... Please wait.</div>';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `stock_symbol=${stockSymbol}`
+                });
                 
-                try {
-                    const response = await fetch('/analyze', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `stock_symbol=${stockSymbol}`
+                const data = await response.json();
+                
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                    return;
+                }
+                
+                let html = '<div class="success">';
+                html += `<h2>Analysis Results for ${data.stock_symbol}</h2>`;
+
+                if (data.stock_data.success) {
+                    html += '<h3>Stock Data</h3>';
+                    html += `<p>Current Price: ${data.stock_data.data.currency}${data.stock_data.data.current_price.toFixed(2)}</p>`;
+                } else {
+                    html += `<p class="error">${data.stock_data.error}</p>`;
+                }
+                
+                if (data.sentiment.success) {
+                    // Sentiment Summary
+                    html += '<div class="sentiment-summary">';
+                    html += '<h3>Sentiment Analysis</h3>';
+                    html += `<p>Average Sentiment: ${(data.sentiment.average_sentiment * 100).toFixed(1)}%</p>`;
+                    html += `<p>Total Posts Analyzed: ${data.sentiment.post_count}</p>`;
+                    html += '<p>Sentiment Distribution:</p>';
+                    html += '<ul>';
+                    const distribution = data.sentiment.sentiment_distribution;
+                    html += `<li>Positive: ${distribution.positive || 0}</li>`;
+                    html += `<li>Neutral: ${distribution.neutral || 0}</li>`;
+                    html += `<li>Negative: ${distribution.negative || 0}</li>`;
+                    html += '</ul>';
+                    html += '</div>';
+                    
+                    // Top Posts
+                    html += '<h3>Top Reddit Posts</h3>';
+                    data.sentiment.top_posts.forEach(post => {
+                        const sentimentClass = post.sentiment > 0 ? 'positive' : (post.sentiment < 0 ? 'negative' : 'neutral');
+                        html += `<div class="post ${sentimentClass}">`;
+                        html += `<div class="post-title"><a href="${post.url}" target="_blank">${post.title}</a></div>`;
+                        html += `<div class="post-meta">`;
+                        html += `Posted in r/${post.subreddit} on ${post.created_utc}`;
+                        html += `<br>Score: ${post.score} | Sentiment: ${(post.sentiment * 100).toFixed(1)}%`;
+                        html += `</div>`;
+                        if (post.text) {
+                            html += `<div class="post-text">${post.text}</div>`;
+                        }
+                        html += '</div>';
+                    });
+                    // data visualization
+                    
+                    html += '<h3>Visualizations</h3>';
+                    data.plot_paths.forEach(path => {
+                        html += `<div><img src="${path}?t=${Date.now()}" style="max-width:100%; margin-bottom: 20px;"></div>`;
                     });
                     
-                    const data = await response.json();
-                    
-                    if (data.error) {
-                        resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
-                        return;
-                    }
-                    
-                    let html = '<div class="success">';
-                    html += `<h2>Analysis Results for ${data.stock_symbol}</h2>`;
-                    
-                    if (data.sentiment.success) {
-                        // Sentiment Summary
-                        html += '<div class="sentiment-summary">';
-                        html += '<h3>Sentiment Analysis</h3>';
-                        html += `<p>Average Sentiment: ${(data.sentiment.average_sentiment * 100).toFixed(1)}%</p>`;
-                        html += `<p>Total Posts Analyzed: ${data.sentiment.post_count}</p>`;
-                        html += '<p>Sentiment Distribution:</p>';
-                        html += '<ul>';
-                        const distribution = data.sentiment.sentiment_distribution;
-                        html += `<li>Positive: ${distribution.positive || 0}</li>`;
-                        html += `<li>Neutral: ${distribution.neutral || 0}</li>`;
-                        html += `<li>Negative: ${distribution.negative || 0}</li>`;
-                        html += '</ul>';
-                        html += '</div>';
-                        
-                        // Top Posts
-                        html += '<h3>Top Reddit Posts</h3>';
-                        data.sentiment.top_posts.forEach(post => {
-                            const sentimentClass = post.sentiment > 0 ? 'positive' : (post.sentiment < 0 ? 'negative' : 'neutral');
-                            html += `<div class="post ${sentimentClass}">`;
-                            html += `<div class="post-title"><a href="${post.url}" target="_blank">${post.title}</a></div>`;
-                            html += `<div class="post-meta">`;
-                            html += `Posted in r/${post.subreddit} on ${post.created_utc}`;
-                            html += `<br>Score: ${post.score} | Sentiment: ${(post.sentiment * 100).toFixed(1)}%`;
-                            html += `</div>`;
-                            if (post.text) {
-                                html += `<div class="post-text">${post.text}</div>`;
-                            }
-                            html += '</div>';
-                        });
-                    } else {
-                        html += `<p class="error">${data.sentiment.error}</p>`;
-                    }
-                    
-                    if (data.stock_data.success) {
-                        html += '<h3>Stock Data</h3>';
-                        html += `<p>Current Price: ${data.stock_data.data.currency}${data.stock_data.data.current_price.toFixed(2)}</p>`;
-                    } else {
-                        html += `<p class="error">${data.stock_data.error}</p>`;
-                    }
-                    
-                    html += '</div>';
-                    resultsDiv.innerHTML = html;
-                    
-                } catch (error) {
-                    resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                } else {
+                    html += `<p class="error">${data.sentiment.error}</p>`;
                 }
-            });
-        </script>
-    </body>
+                
+                
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
 </html> 
