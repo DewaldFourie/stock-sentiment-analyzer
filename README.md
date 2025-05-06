@@ -4,8 +4,7 @@
 Track the hype before the spike. This tool scrapes Reddit for real-time stock discussions, analyzes sentiment using NLP, and blends it with live market data — giving you a street-level view of what the retail crowd is thinking.
 
 ## Preview
-<img width="1440" alt="reddit-stock-analyzer" src="![StockAnalyzer](https://github.com/user-attachments/assets/e8c82ed9-9b7c-4528-9262-bdfb539b9d16)
-" />
+<img width="1440" alt="reddit-stock-analyzer" src="https://github.com/user-attachments/assets/e8c82ed9-9b7c-4528-9262-bdfb539b9d16" />
 
 
 ## Installation
